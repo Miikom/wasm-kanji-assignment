@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type = "module">
+        import init, { search_by_strokes} from "./pkg/wasm_assignment.js";
+        async function run(){
+            await init();
+            console.log("Wasm started");
+
+            const response = await fetch('./kanji-jouyou.json'); // fetch json
+            if (!response.ok) {
+                console.error("Failed to fetch JSON file:", response.statusText);
+                return;
+            }
+
+            const kanji = await response.json();
+            const kanji_string = JSON.stringify(kanji);
+
+            const result = document.getElementById("result");
+
+            document.getElementById("inputfield").addEventListener("input", async (event) => {
+                console.log("Input event:", event);
+                const strokes = parseInt(event.target.value, 10);
+                if (isNaN(strokes)) {
+                    result.innerHTML = "Invalid input";
+                    console.log("Invalid input");
+                    return;
+                }
+                console.log("Strokes:", strokes);
+                const kanji_list = JSON.parse(search_by_strokes(kanji_string, strokes));
+                console.log("Kanji list:\n", kanji_list);
+                result.innerHTML = "";
+                for (const [character, data] of Object.entries(kanji_list)) {
+                    // Create a div for each character
+                    const characterDiv = document.createElement("div");
+
+                    // Add character name to the div
+                    characterDiv.textContent = character + ": ";
+
+                    // Add readings to the div
+                    const readingsSpan = document.createElement("span");
+                    readingsSpan.textContent = `Readings: ${data.readings_on.join(", ")} (on), ${data.readings_kun.join(", ")} (kun)`;
+
+                    // Append readings span to the character div
+                    characterDiv.appendChild(readingsSpan);
+
+                    // Append character div to the characters container
+                    result.appendChild(characterDiv);
+                }
+            });
+        }
+        run();
+    </script>
+</head>
+<body>
+    <h1>Search for Kanji</h1>
+    <form>
+        <input id="inputfield" type="text" placeholder="Stroke count">
+        <div id="result"></div>
+    </form>
+</body>
+</html>
